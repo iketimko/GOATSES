@@ -24,7 +24,7 @@ Switches 4, 5, 6, 8 set ON
 #include <Wire.h>
 #include "SparkFun_Displacement_Sensor_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_Displacement_Sensor
 
-Ewma filtered_data(0.01);   // Exponentially Weighted Moving Average
+Ewma filtered_data(0.15);   // Exponentially Weighted Moving Average
 ADS myFlexSensor; //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType; //Keeps track of if this sensor is a one axis of two axis sensor
 float data;
@@ -57,6 +57,8 @@ void setup()
   calibrate();
 
   // Pause After Sensor Calibration to begin test
+  while (Serial.available() > 0)
+    Serial.read(); //Flush all characters
   Serial.println(F("Good. Now press a key when ready to begin the test."));
   while (Serial.available() == 0)
   {
@@ -102,9 +104,10 @@ void loop()
   if (myFlexSensor.available() == true)
   {
     data = myFlexSensor.getX();
-    float filtered = filtered_data.filter(data);
+    float filtered = filtered_data.filter(data); // Gets input to PID Control law function
     Serial.print(filtered);
-    Serial.println();
+    Serial.print(',');
+    Serial.println(data);
   }
 
   // END BendLabs Calibration and Data Reading
@@ -119,7 +122,7 @@ void loop()
   // **************************
   // For Stepper Motor Command
   
-  StepCount = Move(dx); //one step positive
+  StepCount = Move(dx); //Function requires dx float (distance to move output by PID control
   
   // END Stepper Motor Command
   // **************************
@@ -199,8 +202,6 @@ int Move(float dx)
     delay(5); //this could probably be less but we'll start here)
     digitalWrite(8, LOW); //this is where it'll actually move
     delay(5);
-    Serial.print(i);
-    Serial.println();
   }
   return StepCount;
 }

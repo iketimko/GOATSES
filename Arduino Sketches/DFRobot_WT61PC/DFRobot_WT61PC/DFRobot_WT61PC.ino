@@ -10,7 +10,7 @@
    @date  2020-12-03
    @https://github.com/DFRobot
 */
-//#include <Arduino.h>
+#include <Arduino.h>
 #include <DFRobot_WT61PC.h>
 #include <SoftwareSerial.h>
 
@@ -21,8 +21,6 @@ DFRobot_WT61PC sensor(&mySerial);
 
 void setup()
 {
-  //Use Serial as debug serial port 
-  Serial.begin(115200);
 
   //Use software serial port mySerial as comm port
   mySerial.begin(9600);
@@ -41,5 +39,5 @@ void loop()
     Serial.print("Angle\t"); Serial.print(sensor.Angle.X); Serial.print("\t"); Serial.print(sensor.Angle.Y); Serial.print("\t"); Serial.println(sensor.Angle.Z); //angle information of X, Y, Z 
     Serial.println(" ");
   }
-  //delay(100)
+  delay(50);
 }
