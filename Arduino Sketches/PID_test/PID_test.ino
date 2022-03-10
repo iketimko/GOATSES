@@ -3,9 +3,9 @@
 ArduPID Controller;
 
 //Hardcoded Gain Values
-double Kp = 0;
-double Ki = 0;
-double Kd = 0;
+double Kp = .9;
+double Ki = .6;
+double Kd = .5;
 //Initial horizontal distance between user feet and actuator attachment point
 double x0 = 40; //[in]
 double setpoint = 512;
@@ -20,11 +20,12 @@ double t = 0;
   
 void setup() {
   Serial.begin(9600);
+  delay(5000);
   Serial.println("Please enter the user tether height in inches:");
   while (Serial.available() == 0) {
   }
   h = Serial.parseInt();
-//  float alpha_des = get_bendlabs_data();
+  //  float alpha_des = get_bendlabs_data();
   alpha_des = 0; // use zero for testing purposes
   // initialize the PID function
   Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
