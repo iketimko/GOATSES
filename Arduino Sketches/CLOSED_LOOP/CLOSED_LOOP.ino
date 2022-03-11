@@ -23,7 +23,9 @@ Switches 4, 5, 6, 8 set ON
 #include <Ewma.h>
 #include <Wire.h>
 #include "SparkFun_Displacement_Sensor_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_Displacement_Sensor
+#include "ArduPID.h" // this is the adrupid function in the library manager
 
+ArduPID Controller;
 Ewma filtered_data(0.15);   // Exponentially Weighted Moving Average
 ADS myFlexSensor; //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType; //Keeps track of if this sensor is a one axis of two axis sensor
@@ -32,9 +34,18 @@ const int StepsPerRev = 200;  // steps per revolution on the stepper motor
 const float DistPerStep = 0.012; //distance moved by actuator for each step of the motor, in inches
 int StepCount = 0; //initialize step counter
 
-  // TEST MOTION VALUES, REMOVE WITH COMMANDS
-  float dx = DistPerStep*10;
-
+  //Hardcoded Gain Values for PID
+  double Kp = 5;
+  double Ki = 0;
+  double Kd = 0;
+  //Initial horizontal distance between user feet and actuator attachment point
+  double x0 = 40; //[in]
+  double setpoint;
+  double Beta = 0;
+  double DeltaB;
+  float alpha_des;
+  int h;
+  
 void setup()
 {
   // **************************
@@ -55,16 +66,6 @@ void setup()
   }
   
   calibrate();
-
-  // Pause After Sensor Calibration to begin test
-  while (Serial.available() > 0)
-    Serial.read(); //Flush all characters
-  Serial.println(F("Good. Now press a key when ready to begin the test."));
-  while (Serial.available() == 0)
-  {
-    myFlexSensor.available();
-    delay(10); //Wait for user to press character
-  }
   
   // END Bendlabs sensor
   // **************************
@@ -90,6 +91,31 @@ void setup()
   // **************************
   // For Stepper Motor PID
 
+  Serial.println("Please enter the user tether height in inches:");
+  while (Serial.available() == 0) {
+  }
+  h = Serial.parseInt();
+  
+  delay(2500);
+  
+  // initialize the PID function
+  // Pause for test readiness to begin test
+  while (Serial.available() > 0)
+    Serial.read(); //Flush all characters
+  Serial.println(F("Good. Now press a key when ready to begin the test."));
+  while (Serial.available() == 0)
+  {
+    myFlexSensor.available();
+    delay(10); //Wait for user to press character
+  }
+  double alpha = myFlexSensor.getX();
+  setpoint = filtered_data.filter(alpha);
+  //  float alpha_des = get_bendlabs_data();
+  alpha_des = setpoint; // use zero for testing purposes
+  Serial.println(setpoint);
+  delay(5000);
+  Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
+  Controller.start();
 
   // END Stepper Motor PID
   // **************************
@@ -99,15 +125,15 @@ void loop()
 {
   // **************************
   // For Bendlabs Calibration and data reading
-  
+  float filtered;
   // get bandlabs sensor data
   if (myFlexSensor.available() == true)
   {
     data = myFlexSensor.getX();
-    float filtered = filtered_data.filter(data); // Gets input to PID Control law function
-    Serial.print(filtered);
-    Serial.print(',');
-    Serial.println(data);
+    filtered = filtered_data.filter(data); // Gets input to PID Control law function
+//    Serial.print(filtered);
+//    Serial.print(", ");
+//    Serial.println(data);
   }
 
   // END BendLabs Calibration and Data Reading
@@ -115,7 +141,11 @@ void loop()
 
   // **************************
   // For Stepper Motor PID
-
+   
+  double dx = control_loop(alpha_des, filtered);
+  Serial.println(dx);
+  //Serial.println(dx);
+  
   // END Stepper Motor PID
   // **************************
 
@@ -174,6 +204,21 @@ void calibrate()
   Serial.println(F("Calibration complete."));
 }
 
+// PID Control loop function
+double control_loop(float alpha_des, float alpha_meas)
+{
+  //Defining the quantity beta
+  Beta = tan(alpha_meas) - tan(alpha_des);//[NA]
+  
+  // compute the PID response
+  //Controller.compute();
+  DeltaB = Beta;
+  //Converting change in Beta to change in X
+  double DeltaX = (-h + sqrt(sq(h)/sq(DeltaB) + sq(x0)))/DeltaB; //[in];
+  //Returning commanded shift in X
+  return(DeltaX);
+}
+
 //this is the function we can call to move the motor
 int Move(float dx)
 {
@@ -199,9 +244,9 @@ int Move(float dx)
   for (int i = 1; i<=stepsaway; i++)
   {
     digitalWrite(8, HIGH);
-    delay(5); //this could probably be less but we'll start here)
+    delay(1); //this could probably be less but we'll start here)
     digitalWrite(8, LOW); //this is where it'll actually move
-    delay(5);
+    delay(1);
   }
   return StepCount;
 }
