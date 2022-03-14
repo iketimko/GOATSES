@@ -1,21 +1,21 @@
-/* 
-QHM + Cody Wheeler + Ike Timko
-Using igus dryve D7 Stepper Motor Control System, Using Bendlabs angle sensor data read and calibration
-For BendLabs:
-SCL to SCL
-SDA to SDA
-3.3V IN
-Ground
+/*
+  QHM + Cody Wheeler + Ike Timko + August Hauter
+  Using igus dryve D7 Stepper Motor Control System, Using Bendlabs angle sensor data read and calibration
+  For BendLabs:
+  SCL to SCL
+  SDA to SDA
+  3.3V IN
+  Ground
 
-For Stepper:
-Ground
-Pin 6 is EN+
-Pin 7 is DIR+
-Pin 8 is STEP+
-GND connects to EN-, DIR-, and STEP-
-On the D7 Controller, the motor will connect to A+/A-/B+/B-
-Power source connects to V+/V-
-Switches 4, 5, 6, 8 set ON
+  For Stepper:
+  Ground
+  Pin 6 is EN+
+  Pin 7 is DIR+
+  Pin 8 is STEP+
+  GND connects to EN-, DIR-, and STEP-
+  On the D7 Controller, the motor will connect to A+/A-/B+/B-
+  Power source connects to V+/V-
+  Switches 4, 5, 6, 8 set ON
 
 */
 
@@ -23,6 +23,7 @@ Switches 4, 5, 6, 8 set ON
 #include <Ewma.h>
 #include <Wire.h>
 #include "SparkFun_Displacement_Sensor_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_Displacement_Sensor
+#include "ArduPID.h" // this is the ardupid function in the library manager
 
 Ewma filtered_data(0.15);   // Exponentially Weighted Moving Average
 ADS myFlexSensor; //Create instance of the Angular Displacement Sensor (ADS) class
@@ -32,9 +33,30 @@ const int StepsPerRev = 200;  // steps per revolution on the stepper motor
 const float DistPerStep = 0.012; //distance moved by actuator for each step of the motor, in inches
 int StepCount = 0; //initialize step counter
 
-  // TEST MOTION VALUES, REMOVE WITH COMMANDS
-  float dx = DistPerStep*10;
+// TEST MOTION VALUES, REMOVE WITH COMMANDS
+float dx = DistPerStep * 10;
 
+//*******************************************
+//PID HEADER BEGIN
+ArduPID Controller;
+
+//Hardcoded Gain Values
+double Kp = .9;
+double Ki = .6;
+double Kd = .5;
+//Initial horizontal distance between user feet and actuator attachment point
+double x0 = 40; //[in]
+double setpoint = 512;
+double Beta = 0;
+double DeltaB;
+float alpha_des;
+int h;
+
+
+// generate a time variable for the bendlabs sensor simulation
+double t = 0;
+//PID HEADER END
+//*****************************************
 void setup()
 {
   // **************************
@@ -46,14 +68,14 @@ void setup()
 
   Wire.begin();
   deviceType = myFlexSensor.getDeviceType();
-  
+
   if (myFlexSensor.begin() == false)
   {
     Serial.println(F("No sensor detected. Check wiring. Freezing..."));
     while (1)
       ;
   }
-  
+  //Running the initial calibration of the bendlabs sensors
   calibrate();
 
   // Pause After Sensor Calibration to begin test
@@ -65,18 +87,18 @@ void setup()
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
-  
+
   // END Bendlabs sensor
   // **************************
 
   // **************************
   // For Stepper Motor Control
-  
+
   // set up pins as outputs
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
   pinMode(8, OUTPUT);
-  
+
   //set EN+ to positive
   digitalWrite(6, HIGH);
   digitalWrite(7, LOW);
@@ -99,7 +121,7 @@ void loop()
 {
   // **************************
   // For Bendlabs Calibration and data reading
-  
+
   // get bandlabs sensor data
   if (myFlexSensor.available() == true)
   {
@@ -121,13 +143,13 @@ void loop()
 
   // **************************
   // For Stepper Motor Command
-  
-  StepCount = Move(dx); //Function requires dx float (distance to move output by PID control
-  
+
+  StepCount = Move(dx); //Function requires dx float (distance to move output by PID control)
+
   // END Stepper Motor Command
   // **************************
 
-  delay(10);
+  delay(10); //wait 10ms
 }
 
 // Bendlabs Calibration Function
@@ -178,25 +200,25 @@ void calibrate()
 int Move(float dx)
 {
   //calculate number of steps we need to move
-  int stepsaway = (dx)/DistPerStep; //calculate how many steps we need to move to get to desired location
+  int stepsaway = (dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
   int StepCount = 0;
-  StepCount += stepsaway;
+  StepCount += stepsaway; //Updating the step count based off how many steps are needed to be taken
 
   if (stepsaway < 0)
-  { 
+  {
     digitalWrite(7, HIGH); //set direction pin to high if we're going in the negative direction
     stepsaway = stepsaway * (-1); //make this a positive value
     delay(5); //needs a delay of 5 microseconds, this is more than that
   }
   //going to make an if for stepsaway being positive as well - but i can come up with a cleaner way to do this with less delay later on
-  else 
-  { 
+  else
+  {
     digitalWrite(7, LOW); //set direction pin to high if we're going in the negative direction
     delay(1); //needs a delay of 5 microseconds, this is more than that
   }
 
   //now we need to have a square wave at STEP+ pretty fast for the correct number of times for stepsaway
-  for (int i = 1; i<=stepsaway; i++)
+  for (int i = 1; i <= stepsaway; i++)
   {
     digitalWrite(8, HIGH);
     delay(5); //this could probably be less but we'll start here)
