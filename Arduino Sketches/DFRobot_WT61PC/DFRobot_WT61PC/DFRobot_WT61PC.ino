@@ -10,7 +10,7 @@
    @date  2020-12-03
    @https://github.com/DFRobot
 */
-#include <Arduino.h>
+// #include <Arduino.h>
 #include <DFRobot_WT61PC.h>
 #include <SoftwareSerial.h>
 

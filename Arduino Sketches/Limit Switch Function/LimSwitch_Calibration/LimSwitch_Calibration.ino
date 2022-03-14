@@ -7,27 +7,29 @@
 #include <Stepper.h> 
 //Steps per revolution
 const int stepsPerRev = 200;
+// Flag variable to prevent excess looping
+// flag = 0;
+//Limit Switch pressed boolean
+int OutOfBounds = 0;
+//Number of steps taken counter
+int Nsteps = 0;
+//Number of commanded steps to take by motor
+int Steps2Take = 1;
+//Variable to skip step 1 calibration or not
+int skip = 0;
+  
 //Initialize the stepper motor libraries on pins 8 & 9
 Stepper myStepper(stepsPerRev, 8, 9);
 
 void setup() {
   // Setting the Baud Rate
   Serial.begin(9600);
-  // Flag variable to prevent excess looping
-  // flag = 0;
-  //Limit Switch pressed boolean
-  int OutOfBounds = 0;
-  //Number of steps taken counter
-  int Nsteps = 0;
-  //Number of commanded steps to take by motor
-  int Steps2Take = 1;
-  //Variable to skip step 1 calibration or not
-  int skip = 0;
+
 }
 
 void loop() {
   //Call the function to check if either limit switch on an actuator is pressed
-  OutOfBounds = LimSwitch();
+  int  OutOfBounds = LimSwitch();
   //Move the actuator one step to one side
   if(OutOfBounds != 1){
     myStepper.step(Steps2Take);
@@ -38,25 +40,27 @@ void loop() {
   }
   
   //Actuator Calibration Step 1 (Move to One Side)
-  while(OutOfBounds != 1 && skip == 0){
+  while(OutOfBounds != 1 && skip == 0)
+  {
     //Call the function to check if either limit switch on an actuator is pressed
     OutOfBounds = LimSwitch();
     //Check to see if the actuator should halt movement
     if(OutOfBounds == 1){
       //Reset OutOfBounds Variable
       OutOfBounds = 0;
-      break
+      break;
       }
     else{
       //Move the actuator one step to one side
       myStepper.step(Steps2Take);
       }
-    }
+   }
     
   //Actuator Calibration Step 2 (Move to Other Side)
-  while(OutOfBounds != 1){
+  while(OutOfBounds != 1)
+  {
     //Move the actuator one step to the opposite side and track number of steps
-    myStepper.step(-Steps2Take);
+    myStepper.step(Steps2Take*-1);
     Nsteps = Nsteps + 1;
     
     //Call the function to check if either limit switch on an actuator is pressed
@@ -71,15 +75,15 @@ void loop() {
       Steps2Take = Nsteps/2;
       myStepper.step(Steps2Take);
       Steps2Take = 1;
-      break
+      break;
       }
     }  
 }
 
-int STOP = LimSwitch(){
+int LimSwitch(){
   // Pin state variables
-  const int Gate1 = xxx;
-  const int Gate2 = xxx;
+  const int Gate1 = 0;
+  const int Gate2 = 1;
   pinMode(Gate1,INPUT);
   pinMode(Gate2,INPUT);
   //Stop signal if limit switch is pressed
@@ -92,11 +96,11 @@ int STOP = LimSwitch(){
     return stopperRight;
     }
   else if(digitalRead(Gate2) == HIGH){
-    delay(20);
+    delay(1);
     return stopperLeft;
     }
   else{
-    delay(20);
+    delay(1);
     return 0;
     }
   }
