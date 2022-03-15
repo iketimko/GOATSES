@@ -1,6 +1,7 @@
 /* 
-QHM + Cody Wheeler + Ike Timko
+QHM + Cody Wheeler + Ike Timko + August Hauter
 Using igus dryve D7 Stepper Motor Control System, Using Bendlabs angle sensor data read and calibration
+
 For BendLabs:
 SCL to SCL
 SDA to SDA
@@ -8,8 +9,7 @@ SDA to SDA
 Ground
 
 For Lim Switch:
-Left Lim Switch: Digital 0,1 (0 is open switch, 1 for signal when closed)
-Right Lim Switch: Digital 3,4 (0 is open switch, 1 for signal when closed)
+Directionality for gates of Lim Switch: Digital 0,1 (0 is left switch, 1 for signal when right switch hit)
 5V IN
 Both Ground
 
@@ -26,42 +26,30 @@ Switches 4, 5, 6, 8 set ON
 */
 
 #include <Arduino.h>
-#include <Ewma.h>
+#include <Ewma.h> // BendLabs filtering library
 #include <Wire.h>
 #include "SparkFun_Displacement_Sensor_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_Displacement_Sensor
 #include "ArduPID.h" // this is the adrupid function in the library manager
 
 ArduPID Controller;
 Ewma filtered_data(0.15);   // Exponentially Weighted Moving Average
-ADS myFlexSensor; //Create instance of the Angular Displacement Sensor (ADS) class
-byte deviceType; //Keeps track of if this sensor is a one axis of two axis sensor
+ADS myFlexSensor;           //Create instance of the Angular Displacement Sensor (ADS) class
+byte deviceType;            //Keeps track of if this sensor is a one axis of two axis sensor
 float data;
 const int StepsPerRev = 200;  // steps per revolution on the stepper motor
 const float DistPerStep = 0.012; //distance moved by actuator for each step of the motor, in inches
-int StepCount = 0; //initialize step counter
-// Flag variable to prevent excess looping
-// flag = 0;
-//Limit Switch pressed boolean
-int OutOfBounds;
-//Number of steps taken counter
-int Nsteps = 0;
-//Number of commanded steps to take by motor
-int Steps2Take = 1;
-//Variable to skip step 1 calibration or not
-int skip = 0;
-// Limit Switch Pin state variables, Lim switch left
-const int Gate1 = 0;
-const int Gate2 = 1;
-// Limit Switch Pin state variables, Lim switch right
-const int Gate3 = 2;
-const int Gate4 = 3;
-
-//Stop signal if limit switch is pressed
-int stopperRight = 1;
-int stopperLeft = 2;
-  
+int StepCount = 0;          //initialize step counter
+int OutOfBounds;            //Limit Switch pressed boolean
+int Nsteps = 0;             //Number of steps taken counter
+int Steps2Take = 1;         //Number of commanded steps to take by motor
+const int Gate1 = 0;        // Left Limit Switch pin
+const int Gate2 = 1;        // Right Limit Switch pin
+int stopperRight = 1;       // Stop signal for pressed right limit switch
+int stopperLeft = 2;        // Stop signal for pressed left limit switch
+ 
+  boolean center = 0;
   //Hardcoded Gain Values for PID
-  double Kp = 1;
+  double Kp = .1;
   double Ki = 0;
   double Kd = 0;
   //Initial horizontal distance between user feet and actuator attachment point
@@ -84,8 +72,6 @@ void setup()
 
   pinMode(Gate1,INPUT);
   pinMode(Gate2,INPUT);
-  pinMode(Gate3,INPUT);
-  pinMode(Gate4,INPUT);
 
   //END limit switch stop check
   // **************************
@@ -131,6 +117,7 @@ void setup()
 
   Serial.println("Actuator Centering...");
   //Center();
+  center = 1;
   
   // END Actuator Centering
   // **************************
@@ -225,7 +212,6 @@ void loop()
 
   // **************************
   // For Stepper Motor Command
-  
   StepCount = Move(dx); //Function requires dx float (distance to move output by PID control
   
   // END Stepper Motor Command
@@ -288,20 +274,19 @@ double control_loop(float alpha_des, float alpha_meas)
   // compute the PID response
   Controller.compute();
   //Converting change in Beta to change in X
-  DeltaX = (-h + sqrt(sq(h)/sq(DeltaB) + sq(x0)))/(DeltaB); //[in];
+  DeltaX = (-h + sqrt(sq(h)/sq(DeltaB/0.0174533) + sq(x0)))/(DeltaB/0.0174533); //[in];
   if (abs(DeltaX)>=5)
   {
-//    while (abs(DeltaX)>=5 || abs((DeltaB))==0)
-//    {
-//      // compute the PID response
+    while (abs(DeltaX)>=5)
+    {
+      // compute the PID response
       Controller.compute();
-//      //Converting change in Beta to change in X
-      DeltaX = (-h + sqrt(sq(h)/sq(DeltaB) + sq(x0)))/(DeltaB); //[in];
-//    }
-      DeltaX = 1;
+      //Converting change in Beta to change in X
+      DeltaX = (-h + sqrt(sq(h)/sq(DeltaB/0.0174533) + sq(x0)))/(DeltaB/0.0174533); //[in];
+    }
   }
   Serial.print(", ");
-  Serial.print(DeltaB);
+  Serial.print(DeltaB/0.0174533);
   //Returning commanded shift in X
   return(DeltaX);
 }
@@ -330,10 +315,16 @@ int Move(float dx)
   //now we need to have a square wave at STEP+ pretty fast for the correct number of times for stepsaway
   for (int i = 1; i<=stepsaway; i++)
   {
+      OutOfBounds = LimSwitch();
+    if (OutOfBounds != 0)
+    {
+      Serial.println("Actuator Went Out of Bounds, Ending Test for Safety.");
+      exit(0);
+    }
     digitalWrite(8, HIGH);
-    delayMicroseconds(1); //this could probably be less but we'll start here)
+    delay(1); //this could probably be less but we'll start here)
     digitalWrite(8, LOW); //this is where it'll actually move
-    delayMicroseconds(1);
+    delay(1);
   }
   return StepCount;
 }
