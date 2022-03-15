@@ -46,19 +46,23 @@ const int Gate1 = 0;        // Left Limit Switch pin
 const int Gate2 = 1;        // Right Limit Switch pin
 int stopperRight = 1;       // Stop signal for pressed right limit switch
 int stopperLeft = 2;        // Stop signal for pressed left limit switch
- 
-  boolean center = 0;
-  //Hardcoded Gain Values for PID
+boolean center = 0;
+boolean skip = 0;
+
+  // CONTROL LAW STUFF
+  // Hardcoded Gain Values for PID
   double Kp = .1;
   double Ki = 0;
   double Kd = 0;
-  //Initial horizontal distance between user feet and actuator attachment point
-  double x0 = 40; //[in]
   double setpoint;
-  double Beta;
+  double Beta = 0;
+  // Initialize dx and dB as 0
   double DeltaB = 0;
+  float dx = 0;
   float alpha_des;
-  int h;
+  // Initial horizontal distance between user feet and actuator attachment point, and heigth of attachment point
+  float h;
+  float x0; //[in]
   
 void setup()
 {
@@ -124,16 +128,26 @@ void setup()
 
   // **************************
   // For Stepper Motor PID
+  // Get user height
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
-  Serial.println("Please enter the user tether height in inches:");
+  Serial.println("Please enter the height of the tether attachment point on the user (from the actuator attachment) (in):");
   while (Serial.available() == 0) 
   {
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
   h = Serial.parseInt();
-  
+
+  while (Serial.available() > 0)
+    Serial.read(); //Flush all characters
+  Serial.println("Please enter the distance between the attachement point on the user and actuator (in):");
+  while (Serial.available() == 0) 
+  {
+    myFlexSensor.available();
+    delay(10); //Wait for user to press character
+  }
+  x0 = Serial.parseInt();
   
   // initialize the PID function
   // Pause for test readiness to begin test
@@ -148,13 +162,12 @@ void setup()
   
   double alpha = myFlexSensor.getX();
   setpoint = filtered_data.filter(alpha);
-  //  float alpha_des = get_bendlabs_data();
-  alpha_des = setpoint; // use zero for testing purposes
-  Beta = setpoint; // Initial BendLabs Sensor position
+  alpha_des = setpoint; // Centered initial angle measurement between attachment point and user
   
   Serial.print("The 0 Lean Tether Angle is: ");
   Serial.println(setpoint);
-  delay(5000);
+  delay(1000);
+  // Initialize controller
   Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
   Controller.start();
 
@@ -202,8 +215,9 @@ void loop()
 
   // **************************
   // For Stepper Motor PID
-   
-  double dx = control_loop(alpha_des, filtered);
+  float prev_dx = dx;
+  x0 = prev_dx + x0;
+  dx = control_loop(alpha_des, filtered, x0);
   Serial.print(", ");
   Serial.println(dx);
   
@@ -265,28 +279,31 @@ void calibrate()
 }
 
 // PID Control loop function
-double control_loop(float alpha_des, float alpha_meas)
+float control_loop(float alpha_des, float alpha_meas, float x0)
 {
-
+  float DeltaX;
+  
   //Defining the quantity beta
-  Beta = tan(radians(alpha_meas)) - tan(radians(alpha_des));//[NA]
-  double DeltaX;
+  Beta = (tan(radians(alpha_meas)) - tan(radians(alpha_des))); // Degrees
+  
   // compute the PID response
   Controller.compute();
+  
   //Converting change in Beta to change in X
-  DeltaX = (-h + sqrt(sq(h)/sq(DeltaB/0.0174533) + sq(x0)))/(DeltaB/0.0174533); //[in];
+  DeltaX = h*sin(radians(90) - radians(DeltaB) - asin((x0/h)*sin(radians(DeltaB)))); //[in];
+
+  // Filter incorrect commands
   if (abs(DeltaX)>=5)
   {
     while (abs(DeltaX)>=5)
     {
-      // compute the PID response
       Controller.compute();
       //Converting change in Beta to change in X
-      DeltaX = (-h + sqrt(sq(h)/sq(DeltaB/0.0174533) + sq(x0)))/(DeltaB/0.0174533); //[in];
+      DeltaX = h*sin(radians(90) - radians(DeltaB) - asin((x0/h)*sin(radians(DeltaB)))); //[in];
     }
   }
   Serial.print(", ");
-  Serial.print(DeltaB/0.0174533);
+  Serial.print(DeltaB);
   //Returning commanded shift in X
   return(DeltaX);
 }
