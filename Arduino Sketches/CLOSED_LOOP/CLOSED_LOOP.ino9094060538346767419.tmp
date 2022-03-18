@@ -289,7 +289,7 @@ float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
   Controller.compute();
   
   //Converting change in Beta to change in X
-  DeltaX = radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des)))))))); //[in];
+  DeltaX = h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des))))))); //[in];
 
   // Filter incorrect commands
   if (abs(DeltaX)>=5)
@@ -298,7 +298,7 @@ float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
 //    {
       Controller.compute();
       //Converting change in Beta to change in X
-      DeltaX =   radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des)))))))); //[in];
+      DeltaX =   h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des))))))); //[in];
 
     //}
     DeltaX = 1;
