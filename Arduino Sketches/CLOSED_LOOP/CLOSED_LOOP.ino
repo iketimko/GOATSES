@@ -121,7 +121,7 @@ void setup()
   // Actuator Centering
 
   Serial.println("Actuator Centering...");
-  //Center();
+  Center();
   center = 1;
   
   // END Actuator Centering
@@ -335,7 +335,7 @@ int Move(float dx)
   for (int i = 1; i<=stepsaway; i++)
   {
       OutOfBounds = LimSwitch();
-    if (OutOfBounds != 0)
+    if (OutOfBounds != 0 && center == 1)
     {
       Serial.println("Actuator Went Out of Bounds, Ending Test for Safety.");
       exit(0);
