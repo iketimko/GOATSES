@@ -47,14 +47,12 @@ const int Gate2 = 1;        // Right Limit Switch pin
 int stopperRight = 1;       // Stop signal for pressed right limit switch
 int stopperLeft = 2;        // Stop signal for pressed left limit switch
 boolean center = 0;
-boolean skip = 0;
 
   // CONTROL LAW STUFF
   // Hardcoded Gain Values for PID
   double Kp = .1;
   double Ki = 0;
   double Kd = 0;
-  double setpoint;
   double Beta = 0;
   // Initialize dx and dB as 0
   double DeltaB = 0;
@@ -161,17 +159,23 @@ void setup()
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
+  float S_sum;
+  float alpha;
+ 
+  for (int i =1;i<=101;i++)
+  {
+  alpha = myFlexSensor.getX();
+  S_sum = S_sum + filtered_data.filter(alpha);
   
-  double alpha = myFlexSensor.getX();
-  setpoint = filtered_data.filter(alpha);
-  alpha_des = setpoint; // Centered initial angle measurement between attachment point and user
+  }
+  alpha_des = S_sum/100; // Centered initial angle measurement between attachment point and user
   
   Serial.print("The 0 Lean Tether Angle is: ");
-  Serial.println(setpoint);
+  Serial.println(alpha_des);
   delay(1000);
   // Initialize controller
-  Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
-  Controller.start();
+  //Controller.begin(&Beta,&DeltaB,&alpha_des,Kp,Ki,Kd);
+  //Controller.start();
 
   // END Stepper Motor PID
   // **************************
@@ -219,7 +223,7 @@ void loop()
   // For Stepper Motor PID
   float prev_dx = dx;
   x = prev_dx + x;
-  dx = control_loop(alpha_des, filtered, x0, x, h);
+  dx = -1*control_loop(alpha_des, filtered, x0, x, h);
   Serial.print(", ");
   Serial.println(dx);
   
@@ -286,17 +290,17 @@ float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
   float DeltaX;
   
   // compute the PID response
-  Controller.compute();
+  //Controller.compute();
   
   //Converting change in Beta to change in X
-  DeltaX = radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des)))))))); //[in];
+  DeltaX = radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas)))))-radians(alpha_des)))); //[in];
 
   // Filter incorrect commands
   if (abs(DeltaX)>=5)
   {
 //    while (abs(DeltaX)>=5)
 //    {
-      Controller.compute();
+      //Controller.compute();
       //Converting change in Beta to change in X
       DeltaX =   radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des)))))))); //[in];
 
@@ -368,25 +372,14 @@ int LimSwitch()
 
 // Limit Switch Actuator Centering Function
 void Center()
-{
-//Call the function to check if either limit switch on an actuator is pressed
-  OutOfBounds = LimSwitch();
-  //Move the actuator one step to one side
-  if(OutOfBounds != 1){
-    StepCount = Move(Steps2Take);
-  }
-  else{
-    //Skip over step 1 since already at one side
-    skip = 1;
-  }
-  
+{  
   //Actuator Calibration Step 1 (Move to One Side)
-  while(OutOfBounds != 1 && skip == 0)
+  while(OutOfBounds != 2)
   {
     //Call the function to check if either limit switch on an actuator is pressed
     OutOfBounds = LimSwitch();
     //Check to see if the actuator should halt movement
-    if(OutOfBounds == 1){
+    if(OutOfBounds == 2){
       //Reset OutOfBounds Variable
       OutOfBounds = 0;
       break;
