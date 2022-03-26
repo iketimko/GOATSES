@@ -26,13 +26,15 @@ void setup() {
   }
   h = Serial.parseInt();
   //  float alpha_des = get_bendlabs_data();
-  alpha_des = 0; // use zero for testing purposes
+  float pi = 3.14159; //Pi
+  alpha_des = pi/4; // use 45deg for testing purposes
   // initialize the PID function
   Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
 }
 
 void loop() {
   float alpha_meas = get_bendlabs_data();
+  Serial.println(alpha_meas);
   double dx = control_loop(alpha_des, alpha_meas);
   Serial.println(dx);
   delay(100);
@@ -48,7 +50,7 @@ double control_loop(float alpha_des, float alpha_meas){
   
   //Converting change in Beta to change in X
   double DeltaX = (-h + sqrt(sq(h)/sq(DeltaB) + sq(x0)))/DeltaB; //[in]
-
+  Serial.println(DeltaX);
   //Returning commanded shift in X
   return(DeltaX);
 }
