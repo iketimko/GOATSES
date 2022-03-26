@@ -32,7 +32,7 @@
 #include "ArduPID.h" // this is the adrupid function in the library manager
 
 ArduPID Controller;
-Ewma filtered_data(0.15);   // Exponentially Weighted Moving Average
+Ewma filtered_data(0.1);   // Exponentially Weighted Moving Average
 ADS myFlexSensor;           //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType;            //Keeps track of if this sensor is a one axis of two axis sensor
 float data;
@@ -93,6 +93,7 @@ void setup() //*****************************************************************
   }
 
   calibrate();
+  delay(1000);
 
   // END Bendlabs sensor
   // **************************
@@ -164,13 +165,13 @@ void setup() //*****************************************************************
   //100 point average of bendlabs angle
   float S_sum;
   float alpha;
-  for (int i = 0; i < 100; i++)
+  for (int i = 0; i < 500; i++)
   {
     alpha = myFlexSensor.getX();
     S_sum = S_sum + filtered_data.filter(alpha);
     delay(10);
   }
-  alpha_des = S_sum / 100; // Centered initial angle measurement between attachment point and user
+  alpha_des = S_sum / 500; // Centered initial angle measurement between attachment point and user
 
   Serial.print("The NO Lean Tether Angle is: ");
   Serial.println(alpha_des);
@@ -219,7 +220,7 @@ void loop() //******************************************************************
   // For Stepper Motor PID
   float prev_dx = dx;
   x = prev_dx + x;
-  dx = -1 * control_loop(alpha_des, filtered, x);
+  dx = 1 * control_loop(alpha_des, filtered, x);
   Serial.print(", ");
   Serial.println(dx);
 
@@ -304,7 +305,10 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 int Move(float dx)
 {
   //calculate number of steps we need to move
-  int stepsaway = (dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
+  int stepsaway = (1*dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
+  if (stepsaway > 10){
+    stepsaway = 10;
+  }
   int StepCount = 0;
   StepCount += stepsaway;
 
@@ -395,7 +399,7 @@ void Center()
       //Actuator Calibration Step 3 (Center the Actuator)
       //Move the actuator to center by moving it half the total number of steps between the limit switches
       Steps2Take = Nsteps / 2;
-      StepCount = Move(Steps2Take);
+      StepCount = Move(Steps2Take*DistPerStep);
       Steps2Take = 1;
       break;
     }
