@@ -132,17 +132,18 @@ void setup()
   // Get user height
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
-  Serial.println("Please enter the height of the tether attachment point on the user (from the actuator attachment) (in):");
+  Serial.print("Please enter the height of the tether attachment point on the user (from the actuator attachment) (in): ");
   while (Serial.available() == 0) 
   {
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
   h = Serial.parseInt();
+  Serial.println(h);
 
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
-  Serial.println("Please enter the distance between the attachement point on the user and actuator (in):");
+  Serial.print("Please enter the distance between the attachement point on the user and actuator (in): ");
   while (Serial.available() == 0) 
   {
     myFlexSensor.available();
@@ -150,6 +151,7 @@ void setup()
   }
   x0 = Serial.parseInt();
   x = x0;
+  Serial.println(x);
   
   // initialize the PID function
   // Pause for test readiness to begin test
@@ -170,8 +172,8 @@ void setup()
   Serial.println(setpoint);
   delay(1000);
   // Initialize controller
-  Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
-  Controller.start();
+ // Controller.begin(&Beta,&DeltaB,&setpoint,Kp,Ki,Kd);
+ // Controller.start();
 
   // END Stepper Motor PID
   // **************************
@@ -208,8 +210,6 @@ void loop()
     data = myFlexSensor.getX();
     filtered = filtered_data.filter(data); // Gets input to PID Control law function
     Serial.print(filtered);
-    Serial.print(", ");
-    Serial.print(data);
   }
 
   // END BendLabs Calibration and Data Reading
@@ -221,14 +221,14 @@ void loop()
   x = prev_dx + x;
   dx = control_loop(alpha_des, filtered, x0, x, h);
   Serial.print(", ");
-  Serial.println(dx);
+  Serial.println(x);
   
   // END Stepper Motor PID
   // **************************
 
   // **************************
   // For Stepper Motor Command
-  StepCount = Move(dx); //Function requires dx float (distance to move output by PID control
+  //StepCount = Move(dx); //Function requires dx float (distance to move output by PID control
   
   // END Stepper Motor Command
   // **************************
@@ -289,7 +289,7 @@ float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
   Controller.compute();
   
   //Converting change in Beta to change in X
-  DeltaX = radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des)))))))); //[in];
+  DeltaX = radians(h*sin(radians(90 - alpha_meas - degrees(asin(radians(((x)/h)*degrees(sin(radians(alpha_meas))-sin(radians(alpha_des))))))))); //[in];
 
   // Filter incorrect commands
   if (abs(DeltaX)>=5)
@@ -302,10 +302,20 @@ float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
 
     //}
     DeltaX = 1;
+
   }
-  float X = x-x0;
+    else if (isnan(DeltaX))
+    {
+
+      DeltaX = 1;
+    }
+      Serial.print(", ");
+      Serial.print(sin(radians(alpha_meas))-sin(radians(alpha_des)));
+      Serial.print(", ");
+      Serial.print(asin(radians(((x)/h)*degrees(sin(radians(alpha_meas))-sin(radians(alpha_des))))));
+  //DeltaX = radians(h*sin(radians(90)-radians(alpha_meas) - asin((x/h)*sin(radians(alpha_meas)-radians(alpha_des)))));
   Serial.print(", ");
-  Serial.print(X);
+  Serial.print(DeltaX);
   //Returning commanded shift in X
   return(DeltaX);
 }
