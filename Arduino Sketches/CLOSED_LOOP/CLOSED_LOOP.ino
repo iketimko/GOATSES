@@ -63,7 +63,7 @@ boolean center = 0;
   float x0; //[in]
   float x;
   
-void setup()
+void setup() *********************************************************************************************************************
 {
   Serial.begin(115200);
     while (!Serial)
@@ -159,14 +159,13 @@ void setup()
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
+  
   float S_sum;
   float alpha;
- 
   for (int i =1;i<=101;i++)
   {
   alpha = myFlexSensor.getX();
   S_sum = S_sum + filtered_data.filter(alpha);
-  
   }
   alpha_des = S_sum/100; // Centered initial angle measurement between attachment point and user
   
@@ -181,7 +180,7 @@ void setup()
   // **************************
 }
 
-void loop()
+void loop() **********************************************************************************************************************
 {
   // **************************
   // IMU Data Collection
@@ -240,7 +239,7 @@ void loop()
   delay(5);
 }
 
-// Bendlabs Calibration Function
+// Bendlabs Calibration Function *************************************************************************************************
 void calibrate()
 {
   Serial.println(F("BendLabs Calibration routine"));
@@ -284,7 +283,7 @@ void calibrate()
   Serial.println(F("BendLabsCalibration complete."));
 }
 
-// PID Control loop function
+// PID Control loop function *****************************************************************************************************
 float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
 {
   float DeltaX;
@@ -314,7 +313,7 @@ float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
   return(DeltaX);
 }
 
-//this is the function we can call to move the motor
+//this is the function we can call to move the motor *****************************************************************************
 int Move(float dx)
 {
   //calculate number of steps we need to move
@@ -352,7 +351,7 @@ int Move(float dx)
   return StepCount;
 }
 
-// Limit Switch control function
+// Limit Switch control function *************************************************************************************************
 int LimSwitch()
 {
   //Check the switch state
@@ -370,7 +369,7 @@ int LimSwitch()
     }
   }
 
-// Limit Switch Actuator Centering Function
+// Limit Switch Actuator Centering Function **************************************************************************************
 void Center()
 {  
   //Actuator Calibration Step 1 (Move to One Side)
