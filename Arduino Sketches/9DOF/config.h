@@ -6,9 +6,9 @@
 #define ENABLE_ACCEL_LOG      true
 #define ENABLE_GYRO_LOG       true
 #define ENABLE_MAG_LOG        true
-#define ENABLE_QUAT_LOG       false
-#define ENABLE_EULER_LOG      false
-#define ENABLE_HEADING_LOG    false
+#define ENABLE_QUAT_LOG       true
+#define ENABLE_EULER_LOG      true
+#define ENABLE_HEADING_LOG    true
 
 ////////////////////////////////////////
 // Enable Non-Volatile Memory Storage //
@@ -50,7 +50,7 @@
 #define ENABLE_SD_LOGGING true // Default SD logging (can be changed via serial menu)
 #define LOG_FILE_INDEX_MAX 999 // Max number of "logXXX.txt" files
 #define LOG_FILE_PREFIX "log"  // Prefix name for log files
-#define LOG_FILE_SUFFIX "txt"  // Suffix name for log files
+#define LOG_FILE_SUFFIX "csv"  // Suffix name for log files
 #define SD_MAX_FILE_SIZE 5000000 // 5MB max file size, increment to next file before surpassing
 #define SD_LOG_WRITE_BUFFER_SIZE 1024 // Experimentally tested to produce 100Hz logs
 

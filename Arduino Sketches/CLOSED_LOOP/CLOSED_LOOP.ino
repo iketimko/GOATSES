@@ -164,10 +164,10 @@ void setup()
  
   for (int i =1;i<=101;i++)
   {
-  alpha = myFlexSensor.getX();
-  S_sum = S_sum + filtered_data.filter(alpha);
-  
+    alpha = myFlexSensor.getX();
+    S_sum = S_sum + filtered_data.filter(alpha);   
   }
+  
   alpha_des = S_sum/100; // Centered initial angle measurement between attachment point and user
   
   Serial.print("The 0 Lean Tether Angle is: ");
@@ -256,19 +256,19 @@ void calibrate()
 
   myFlexSensor.calibrateZero(); //Call when sensor is straight on both axis
 
-  if (deviceType == ADS_TWO_AXIS)
-  {
-    while (Serial.available() > 0)
-      Serial.read(); //Flush all characters
-    Serial.println(F("Good. Now press a key when the sensor is straight from base but 90 degrees up from table (along Y axis)."));
-    while (Serial.available() == 0)
-    {
-      myFlexSensor.available();
-      delay(10); //Wait for user to press character
-    }
-
-    myFlexSensor.calibrateY(); //Call when sensor is straight on Y axis and 90 degrees on X axis
-  }
+//  if (deviceType == ADS_TWO_AXIS)
+//  {
+//    while (Serial.available() > 0)
+//      Serial.read(); //Flush all characters
+//    Serial.println(F("Good. Now press a key when the sensor is straight from base but 90 degrees up from table (along Y axis)."));
+//    while (Serial.available() == 0)
+//    {
+//      myFlexSensor.available();
+//      delay(10); //Wait for user to press character
+//    }
+//
+//    myFlexSensor.calibrateY(); //Call when sensor is straight on Y axis and 90 degrees on X axis
+//  }
 
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
@@ -338,7 +338,7 @@ int Move(float dx)
   //now we need to have a square wave at STEP+ pretty fast for the correct number of times for stepsaway
   for (int i = 1; i<=stepsaway; i++)
   {
-      OutOfBounds = LimSwitch();
+    OutOfBounds = LimSwitch();
     if (OutOfBounds != 0 && center == 1)
     {
       Serial.println("Actuator Went Out of Bounds, Ending Test for Safety.");
