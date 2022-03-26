@@ -1,27 +1,27 @@
-/* 
-QHM + Cody Wheeler + Ike Timko + August Hauter
-Using igus dryve D7 Stepper Motor Control System, Using Bendlabs angle sensor data read and calibration
+/*
+  QHM + Cody Wheeler + Ike Timko + August Hauter
+  Using igus dryve D7 Stepper Motor Control System, Using Bendlabs angle sensor data read and calibration
 
-For BendLabs:
-SCL to SCL
-SDA to SDA
-3.3V IN
-Ground
+  For BendLabs:
+  SCL to SCL
+  SDA to SDA
+  3.3V IN
+  Ground
 
-For Lim Switch:
-Directionality for gates of Lim Switch: Digital 0,1 (0 is left switch, 1 for signal when right switch hit)
-5V IN
-Both Ground
+  For Lim Switch:
+  Directionality for gates of Lim Switch: Digital 0,1 (0 is left switch, 1 for signal when right switch hit)
+  5V IN
+  Both Ground
 
-For Stepper:
-Ground
-Pin 6 is EN+
-Pin 7 is DIR+
-Pin 8 is STEP+
-GND connects to EN-, DIR-, and STEP-
-On the D7 Controller, the motor will connect to A+/A-/B+/B-
-Power source connects to V+/V-
-Switches 4, 5, 6, 8 set ON
+  For Stepper:
+  Ground
+  Pin 6 is EN+
+  Pin 7 is DIR+
+  Pin 8 is STEP+
+  GND connects to EN-, DIR-, and STEP-
+  On the D7 Controller, the motor will connect to A+/A-/B+/B-
+  Power source connects to V+/V-
+  Switches 4, 5, 6, 8 set ON
 
 */
 
@@ -39,72 +39,72 @@ float data;
 const int StepsPerRev = 200;  // steps per revolution on the stepper motor
 const float DistPerStep = 0.012; //distance moved by actuator for each step of the motor, in inches
 int StepCount = 0;          //initialize step counter
-int OutOfBounds;            //Limit Switch pressed boolean
+int OutOfBounds = 0;            //Limit Switch pressed boolean
 int Nsteps = 0;             //Number of steps taken counter
 int Steps2Take = 1;         //Number of commanded steps to take by motor
-const int Gate1 = 0;        // Left Limit Switch pin
-const int Gate2 = 1;        // Right Limit Switch pin
+const int GateL = 0;        // Left Limit Switch pin
+const int GateR = 1;        // Right Limit Switch pin
 int stopperRight = 1;       // Stop signal for pressed right limit switch
 int stopperLeft = 2;        // Stop signal for pressed left limit switch
-boolean center = 0;
+boolean isCentered = 0;     // Centered calibration flag
 
-  // CONTROL LAW STUFF
-  // Hardcoded Gain Values for PID
-  double Kp = .1;
-  double Ki = 0;
-  double Kd = 0;
-  double Beta = 0;
-  // Initialize dx and dB as 0
-  double DeltaB = 0;
-  float dx = 0;
-  float alpha_des;
-  // Initial horizontal distance between user feet and actuator attachment point, and heigth of attachment point
-  float h;
-  float x0; //[in]
-  float x;
-  
-void setup() *********************************************************************************************************************
+// CONTROL LAW STUFF
+// Hardcoded Gain Values for PID
+double Kp = .1;
+double Ki = 0;
+double Kd = 0;
+double Beta = 0;
+// Initialize dx and dB as 0
+double DeltaB = 0;
+float dx = 0;
+float alpha_des;
+// Initial horizontal distance between user feet and actuator attachment point, and heigth of attachment point
+float h;
+float x0; //[in]
+float x;
+
+void setup() //*********************************************************************************************************************
 {
   Serial.begin(115200);
-    while (!Serial)
+  while (!Serial)
     ;
   Serial.println("Beginning Test Setup/Calibration");
-    
+
   // **************************
   // Limit switch stop check
 
-  pinMode(Gate1,INPUT);
-  pinMode(Gate2,INPUT);
+  pinMode(GateL, INPUT);
+  pinMode(GateR, INPUT);
 
   //END limit switch stop check
   // **************************
-  
+
   // **************************
   // For the bendlabs sensor
 
   Wire.begin();
   deviceType = myFlexSensor.getDeviceType();
-  
+
   if (myFlexSensor.begin() == false)
   {
     Serial.println(F("No BendLabs sensor detected. Check wiring. Freezing..."));
     while (1)
       ;
   }
-  
+
   calibrate();
-  
+
   // END Bendlabs sensor
   // **************************
 
   // **************************
   // For Stepper Motor Control
-  
+
   // set up pins as outputs
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
   pinMode(8, OUTPUT);
-  
+
   //set EN+ to positive
   digitalWrite(6, HIGH);
   digitalWrite(7, LOW);
@@ -120,8 +120,9 @@ void setup() *******************************************************************
 
   Serial.println("Actuator Centering...");
   Center();
-  center = 1;
-  
+  //isCentered == 1 implies that we've centered the actuator
+  isCentered = 1;
+
   // END Actuator Centering
   // **************************
 
@@ -131,7 +132,7 @@ void setup() *******************************************************************
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
   Serial.println("Please enter the height of the tether attachment point on the user (from the actuator attachment) (in):");
-  while (Serial.available() == 0) 
+  while (Serial.available() == 0)
   {
     myFlexSensor.available();
     delay(10); //Wait for user to press character
@@ -141,14 +142,14 @@ void setup() *******************************************************************
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
   Serial.println("Please enter the distance between the attachement point on the user and actuator (in):");
-  while (Serial.available() == 0) 
+  while (Serial.available() == 0)
   {
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
   x0 = Serial.parseInt();
   x = x0;
-  
+
   // initialize the PID function
   // Pause for test readiness to begin test
   while (Serial.available() > 0)
@@ -159,17 +160,19 @@ void setup() *******************************************************************
     myFlexSensor.available();
     delay(10); //Wait for user to press character
   }
-  
+
+  //100 point average of bendlabs angle
   float S_sum;
   float alpha;
-  for (int i =1;i<=101;i++)
+  for (int i = 0; i < 100; i++)
   {
-  alpha = myFlexSensor.getX();
-  S_sum = S_sum + filtered_data.filter(alpha);
+    alpha = myFlexSensor.getX();
+    S_sum = S_sum + filtered_data.filter(alpha);
+    delay(10);
   }
-  alpha_des = S_sum/100; // Centered initial angle measurement between attachment point and user
-  
-  Serial.print("The 0 Lean Tether Angle is: ");
+  alpha_des = S_sum / 100; // Centered initial angle measurement between attachment point and user
+
+  Serial.print("The NO Lean Tether Angle is: ");
   Serial.println(alpha_des);
   delay(1000);
   // Initialize controller
@@ -180,14 +183,8 @@ void setup() *******************************************************************
   // **************************
 }
 
-void loop() **********************************************************************************************************************
+void loop() //**********************************************************************************************************************
 {
-  // **************************
-  // IMU Data Collection
-
-  // END IMU Data Collection
-  // **************************
-  
   // **************************
   // Limit switch stop check
 
@@ -197,13 +194,13 @@ void loop() ********************************************************************
     Serial.println("Actuator Went Out of Bounds, Ending Test for Safety.");
     exit(0);
   }
-  
+
   //END limit switch stop check
   // **************************
-   
+
   // **************************
   // For Bendlabs Calibration and data reading
-  
+
   float filtered;
   // get bandlabs sensor data
   if (myFlexSensor.available() == true)
@@ -222,21 +219,19 @@ void loop() ********************************************************************
   // For Stepper Motor PID
   float prev_dx = dx;
   x = prev_dx + x;
-  dx = -1*control_loop(alpha_des, filtered, x0, x, h);
+  dx = -1 * control_loop(alpha_des, filtered, x);
   Serial.print(", ");
   Serial.println(dx);
-  
+
   // END Stepper Motor PID
   // **************************
 
   // **************************
   // For Stepper Motor Command
   StepCount = Move(dx); //Function requires dx float (distance to move output by PID control
-  
+
   // END Stepper Motor Command
   // **************************
-
-  delay(5);
 }
 
 // Bendlabs Calibration Function *************************************************************************************************
@@ -254,20 +249,19 @@ void calibrate()
   }
 
   myFlexSensor.calibrateZero(); //Call when sensor is straight on both axis
-
-  if (deviceType == ADS_TWO_AXIS)
-  {
-    while (Serial.available() > 0)
-      Serial.read(); //Flush all characters
-    Serial.println(F("Good. Now press a key when the sensor is straight from base but 90 degrees up from table (along Y axis)."));
-    while (Serial.available() == 0)
-    {
-      myFlexSensor.available();
-      delay(10); //Wait for user to press character
-    }
-
-    myFlexSensor.calibrateY(); //Call when sensor is straight on Y axis and 90 degrees on X axis
-  }
+  //  if (deviceType == ADS_TWO_AXIS)
+  //  {
+  //    while (Serial.available() > 0)
+  //      Serial.read(); //Flush all characters
+  //    Serial.println(F("Good. Now press a key when the sensor is straight from base but 90 degrees up from table (along Y axis)."));
+  //    while (Serial.available() == 0)
+  //    {
+  //      myFlexSensor.available();
+  //      delay(10); //Wait for user to press character
+  //    }
+  //
+  //    myFlexSensor.calibrateY(); //Call when sensor is straight on Y axis and 90 degrees on X axis
+  //  }
 
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
@@ -284,65 +278,59 @@ void calibrate()
 }
 
 // PID Control loop function *****************************************************************************************************
-float control_loop(float alpha_des, float alpha_meas, float x0,float x, float h)
+float control_loop(float alpha_des, float alpha_meas, float x)
 {
   float DeltaX;
-  
+
   // compute the PID response
   //Controller.compute();
-  
+
   //Converting change in Beta to change in X
-  DeltaX = radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas)))))-radians(alpha_des)))); //[in];
+  DeltaX = radians(h * sin(radians(90 - alpha_meas - degrees(asin(((x) / h) * (sin(radians(alpha_meas))))) - radians(alpha_des)))); //[in];
 
   // Filter incorrect commands
-  if (abs(DeltaX)>=5)
+  if (abs(DeltaX) >= 5)
   {
-//    while (abs(DeltaX)>=5)
-//    {
-      //Controller.compute();
-      //Converting change in Beta to change in X
-      DeltaX =   radians(h*sin(radians(90 - alpha_meas - degrees(asin(((x)/h)*(sin(radians(alpha_meas))-sin(radians(alpha_des)))))))); //[in];
-
-    //}
     DeltaX = 1;
   }
-  float X = x-x0;
+  
   Serial.print(", ");
-  Serial.print(X);
+  Serial.print(DeltaX);
   //Returning commanded shift in X
-  return(DeltaX);
+  return (DeltaX);
 }
 
 //this is the function we can call to move the motor *****************************************************************************
 int Move(float dx)
 {
   //calculate number of steps we need to move
-  int stepsaway = (dx)/DistPerStep; //calculate how many steps we need to move to get to desired location
+  int stepsaway = (dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
   int StepCount = 0;
   StepCount += stepsaway;
 
   if (stepsaway < 0)
-  { 
+  {
     digitalWrite(7, HIGH); //set direction pin to high if we're going in the negative direction
     stepsaway = stepsaway * (-1); //make this a positive value
-    delay(1); //needs a delay of 5 microseconds, this is more than that
+    delayMicroseconds(10); //needs a delay of 10 microseconds, this is more than that
   }
   //going to make an if for stepsaway being positive as well - but i can come up with a cleaner way to do this with less delay later on
-  else 
-  { 
+  else
+  {
     digitalWrite(7, LOW); //set direction pin to high if we're going in the negative direction
-    delay(1); //needs a delay of 5 microseconds, this is more than that
+    delayMicroseconds(10); //needs a delay of 10 microseconds, this is more than that
   }
 
   //now we need to have a square wave at STEP+ pretty fast for the correct number of times for stepsaway
-  for (int i = 1; i<=stepsaway; i++)
+  for (int i = 1; i <= stepsaway; i++)
   {
-      OutOfBounds = LimSwitch();
-    if (OutOfBounds != 0 && center == 1)
+    OutOfBounds = LimSwitch();
+    if (OutOfBounds != 0 && isCentered == 1)
     {
       Serial.println("Actuator Went Out of Bounds, Ending Test for Safety.");
       exit(0);
     }
+    //Square wave
     digitalWrite(8, HIGH);
     delay(1); //this could probably be less but we'll start here)
     digitalWrite(8, LOW); //this is where it'll actually move
@@ -356,59 +344,60 @@ int LimSwitch()
 {
   //Check the switch state
   //If either limit switch is pressed send the signal to stop all movement of the actuator
-  if(digitalRead(Gate1) == HIGH){
+  if (digitalRead(GateL) == HIGH) {
     Serial.println("Left Bumper Hit");
     return stopperLeft;
-    }
-  else if(digitalRead(Gate2) == HIGH){
+  }
+  else if (digitalRead(GateR) == HIGH) {
     Serial.println("Right Bumper Hit");
     return stopperRight;
-    }
-  else{
-    return 0;
-    }
   }
+  //If no bumber is hit return logical zero
+  else {
+    return 0;
+  }
+}
 
 // Limit Switch Actuator Centering Function **************************************************************************************
 void Center()
-{  
+{
   //Actuator Calibration Step 1 (Move to One Side)
-  while(OutOfBounds != 2)
+  while (OutOfBounds != stopperLeft)
   {
     //Call the function to check if either limit switch on an actuator is pressed
     OutOfBounds = LimSwitch();
     //Check to see if the actuator should halt movement
-    if(OutOfBounds == 2){
+    if (OutOfBounds == stopperLeft) {
       //Reset OutOfBounds Variable
       OutOfBounds = 0;
       break;
-      }
-    else{
+    }
+    else {
       //Move the actuator one step to one side
-      StepCount = Move(Steps2Take);
-      }
-   }
-    
+      StepCount = Move(DistPerStep);
+    }
+  }
+
   //Actuator Calibration Step 2 (Move to Other Side)
-  while(OutOfBounds != 1)
+  while (OutOfBounds != stopperRight)
   {
     //Move the actuator one step to the opposite side and track number of steps
-      StepCount = Move(Steps2Take*-1);
+    StepCount = Move(DistPerStep * -1);
     Nsteps = Nsteps + 1;
-    
+
     //Call the function to check if either limit switch on an actuator is pressed
     OutOfBounds = LimSwitch();
     //Check to see if the actuator should halt movement
-    if(OutOfBounds == 1){
+    if (OutOfBounds == stopperRight) {
       //Reset OutOfBounds Variable
       OutOfBounds = 0;
 
       //Actuator Calibration Step 3 (Center the Actuator)
       //Move the actuator to center by moving it half the total number of steps between the limit switches
-      Steps2Take = Nsteps/2;
+      Steps2Take = Nsteps / 2;
       StepCount = Move(Steps2Take);
       Steps2Take = 1;
       break;
-      }
     }
+  }
 }
