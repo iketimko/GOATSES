@@ -29,9 +29,9 @@
 #include <Ewma.h> // BendLabs filtering library
 #include <Wire.h>
 #include "SparkFun_Displacement_Sensor_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_Displacement_Sensor
-#include "ArduPID.h" // this is the adrupid function in the library manager
+//#include "ArduPID.h" // this is the adrupid function in the library manager
 
-ArduPID Controller;
+//ArduPID Controller;
 Ewma filtered_data(0.005);   // Exponentially Weighted Moving Average
 ADS myFlexSensor;           //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType;            //Keeps track of if this sensor is a one axis of two axis sensor
@@ -50,12 +50,12 @@ boolean isCentered = 0;     // Centered calibration flag
 
 // CONTROL LAW STUFF
 // Hardcoded Gain Values for PID
-double Kp = .1;
-double Ki = 0;
-double Kd = 0;
-double Beta = 0;
+//double Kp = .1;
+//double Ki = 0;
+//double Kd = 0;
+//double Beta = 0;
 // Initialize dx and dB as 0
-double DeltaB = 0;
+//double DeltaB = 0;
 float dx = 0;
 float alpha_des;
 // Initial horizontal distance between user feet and actuator attachment point, and heigth of attachment point
@@ -287,11 +287,13 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 
   // compute the PID response
   //Controller.compute();
-if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>0.2){
-  DeltaX = DistPerStep;
-}
-else{
-  DeltaX = -DistPerStep;
+  if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>0.2)
+  {
+    DeltaX = DistPerStep;
+  }
+  else
+  {
+    DeltaX = -DistPerStep;
   }
   //Converting change in Beta to change in X
 //  DeltaX = radians(h * sin(radians(90 - alpha_meas - degrees(asin(((x) / h) * (sin(radians(alpha_meas))))) - radians(alpha_des)))); //[in];
