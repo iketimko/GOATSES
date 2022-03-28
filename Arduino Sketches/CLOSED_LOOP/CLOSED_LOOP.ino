@@ -168,12 +168,21 @@ void setup() //*****************************************************************
   for (int i = 0; i < 500; i++)
   {
     alpha = myFlexSensor.getX();
+<<<<<<< HEAD
+    S_sum = S_sum + filtered_data.filter(alpha);   
+  }
+  
+  alpha_des = S_sum/100; // Centered initial angle measurement between attachment point and user
+  
+  Serial.print("The 0 Lean Tether Angle is: ");
+=======
     S_sum = S_sum + filtered_data.filter(alpha);
     delay(10);
   }
   alpha_des = S_sum / 500; // Centered initial angle measurement between attachment point and user
 
   Serial.print("The NO Lean Tether Angle is: ");
+>>>>>>> 0d8b612c5ec87ea70688daee9b9b9ee6021318f2
   Serial.println(alpha_des);
   delay(1000);
   // Initialize controller
@@ -250,6 +259,22 @@ void calibrate()
   }
 
   myFlexSensor.calibrateZero(); //Call when sensor is straight on both axis
+<<<<<<< HEAD
+
+//  if (deviceType == ADS_TWO_AXIS)
+//  {
+//    while (Serial.available() > 0)
+//      Serial.read(); //Flush all characters
+//    Serial.println(F("Good. Now press a key when the sensor is straight from base but 90 degrees up from table (along Y axis)."));
+//    while (Serial.available() == 0)
+//    {
+//      myFlexSensor.available();
+//      delay(10); //Wait for user to press character
+//    }
+//
+//    myFlexSensor.calibrateY(); //Call when sensor is straight on Y axis and 90 degrees on X axis
+//  }
+=======
   //  if (deviceType == ADS_TWO_AXIS)
   //  {
   //    while (Serial.available() > 0)
@@ -263,6 +288,7 @@ void calibrate()
   //
   //    myFlexSensor.calibrateY(); //Call when sensor is straight on Y axis and 90 degrees on X axis
   //  }
+>>>>>>> 0d8b612c5ec87ea70688daee9b9b9ee6021318f2
 
   while (Serial.available() > 0)
     Serial.read(); //Flush all characters
@@ -337,7 +363,11 @@ int Move(float dx)
   for (int i = 1; i <= stepsaway; i++)
   {
     OutOfBounds = LimSwitch();
+<<<<<<< HEAD
+    if (OutOfBounds != 0 && center == 1)
+=======
     if (OutOfBounds != 0 && isCentered == 1)
+>>>>>>> 0d8b612c5ec87ea70688daee9b9b9ee6021318f2
     {
       Serial.println("Actuator Went Out of Bounds, Ending Test for Safety.");
       exit(0);
