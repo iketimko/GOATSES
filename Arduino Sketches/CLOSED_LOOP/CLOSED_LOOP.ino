@@ -32,7 +32,7 @@
 #include "ArduPID.h" // this is the adrupid function in the library manager
 
 ArduPID Controller;
-Ewma filtered_data(0.1);   // Exponentially Weighted Moving Average
+Ewma filtered_data(0.005);   // Exponentially Weighted Moving Average
 ADS myFlexSensor;           //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType;            //Keeps track of if this sensor is a one axis of two axis sensor
 float data;
@@ -210,7 +210,7 @@ void loop() //******************************************************************
     filtered = filtered_data.filter(data); // Gets input to PID Control law function
     Serial.print(filtered);
     Serial.print(", ");
-    Serial.print(data);
+    Serial.println(data);
   }
 
   // END BendLabs Calibration and Data Reading
@@ -221,8 +221,8 @@ void loop() //******************************************************************
   float prev_dx = dx;
   x = prev_dx + x;
   dx = 1 * control_loop(alpha_des, filtered, x);
-  Serial.print(", ");
-  Serial.println(dx);
+//  Serial.print(", ");
+//  Serial.println(dx);
 
   // END Stepper Motor PID
   // **************************
@@ -285,18 +285,28 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 
   // compute the PID response
   //Controller.compute();
-
-  //Converting change in Beta to change in X
-  DeltaX = radians(h * sin(radians(90 - alpha_meas - degrees(asin(((x) / h) * (sin(radians(alpha_meas))))) - radians(alpha_des)))); //[in];
-
-  // Filter incorrect commands
-  if (abs(DeltaX) >= 5)
-  {
-    DeltaX = 1;
+if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>0.2){
+  DeltaX = DistPerStep;
+}
+else{
+  DeltaX = -DistPerStep;
   }
-  
-  Serial.print(", ");
-  Serial.print(DeltaX);
+  //Converting change in Beta to change in X
+//  DeltaX = radians(h * sin(radians(90 - alpha_meas - degrees(asin(((x) / h) * (sin(radians(alpha_meas))))) - radians(alpha_des)))); //[in];
+//
+//  // Filter incorrect commands
+//  if (abs(DeltaX) >= 20 * DistPerStep)
+//  {
+//    if (DeltaX > 0) {
+//      DeltaX = 20 * DistPerStep;
+//    }
+//    else {
+//      DeltaX = -20 * DistPerStep;
+//    }
+//  }
+
+//  Serial.print(", ");
+//  Serial.print(DeltaX);
   //Returning commanded shift in X
   return (DeltaX);
 }
@@ -305,10 +315,8 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 int Move(float dx)
 {
   //calculate number of steps we need to move
-  int stepsaway = (1*dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
-  if (stepsaway > 10){
-    stepsaway = 10;
-  }
+  int stepsaway = (1 * dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
+
   int StepCount = 0;
   StepCount += stepsaway;
 
@@ -399,7 +407,7 @@ void Center()
       //Actuator Calibration Step 3 (Center the Actuator)
       //Move the actuator to center by moving it half the total number of steps between the limit switches
       Steps2Take = Nsteps / 2;
-      StepCount = Move(Steps2Take*DistPerStep);
+      StepCount = Move(Steps2Take * DistPerStep);
       Steps2Take = 1;
       break;
     }
