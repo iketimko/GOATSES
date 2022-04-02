@@ -32,7 +32,7 @@
 //#include "ArduPID.h" // this is the adrupid function in the library manager
 
 //ArduPID Controller;
-Ewma filtered_data(0.005);   // Exponentially Weighted Moving Average
+Ewma filtered_data(0.0005);   // Exponentially Weighted Moving Average
 ADS myFlexSensor;           //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType;            //Keeps track of if this sensor is a one axis of two axis sensor
 float data;
@@ -287,7 +287,7 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 
   // compute the PID response
   //Controller.compute();
-  if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>0.2)
+  if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>1)
   {
     DeltaX = DistPerStep;
   }
@@ -319,7 +319,7 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 int Move(float dx)
 {
   //calculate number of steps we need to move
-  int stepsaway = (1 * dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
+  int stepsaway = (-1 * dx) / DistPerStep; //calculate how many steps we need to move to get to desired location
 
   int StepCount = 0;
   StepCount += stepsaway;
