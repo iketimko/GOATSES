@@ -162,13 +162,24 @@ void setup() //*****************************************************************
     delay(10); //Wait for user to press character
   }
 
+  // loop to remove drift
+  float temp;
+    Serial.println("Looping ... ");
+   for (int i = 0; i < 1500; i++)
+    {
+      temp = myFlexSensor.getX();
+      delay(10);
+    }  
+
+
   //100 point average of bendlabs angle
   float S_sum;
   float alpha;
   for (int i = 0; i < 500; i++)
   {
     alpha = myFlexSensor.getX();
-    S_sum = S_sum + filtered_data.filter(alpha);   
+    S_sum = S_sum + filtered_data.filter(alpha);  
+    delay(10);
   }
 
   alpha_des = S_sum / 500; // Centered initial angle measurement between attachment point and user
@@ -289,11 +300,11 @@ float control_loop(float alpha_des, float alpha_meas, float x)
   //Controller.compute();
   if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>1)
   {
-    DeltaX = DistPerStep;
+    DeltaX = -DistPerStep;
   }
   else
   {
-    DeltaX = -DistPerStep;
+    DeltaX = DistPerStep;
   }
   //Converting change in Beta to change in X
 //  DeltaX = radians(h * sin(radians(90 - alpha_meas - degrees(asin(((x) / h) * (sin(radians(alpha_meas))))) - radians(alpha_des)))); //[in];
