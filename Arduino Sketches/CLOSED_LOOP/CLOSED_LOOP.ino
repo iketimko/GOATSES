@@ -32,7 +32,7 @@
 //#include "ArduPID.h" // this is the adrupid function in the library manager
 
 //ArduPID Controller;
-Ewma filtered_data(0.0005);   // Exponentially Weighted Moving Average
+Ewma filtered_data(0.005);   // Exponentially Weighted Moving Average
 ADS myFlexSensor;           //Create instance of the Angular Displacement Sensor (ADS) class
 byte deviceType;            //Keeps track of if this sensor is a one axis of two axis sensor
 float data;
@@ -197,6 +197,11 @@ void setup() //*****************************************************************
 
 void loop() 
 {
+  //Extra delay for best angle querying
+  // **************************
+  delay(10);
+  // **************************
+  
   // **************************
   // Limit switch stop check
 
@@ -298,7 +303,7 @@ float control_loop(float alpha_des, float alpha_meas, float x)
 
   // compute the PID response
   //Controller.compute();
-  if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>1)
+  if (alpha_des < alpha_meas && abs(alpha_des-alpha_meas)>0.1)
   {
     DeltaX = -DistPerStep;
   }
