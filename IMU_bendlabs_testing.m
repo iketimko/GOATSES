@@ -17,7 +17,13 @@ filename_IMU = 'LOG7.csv';
 %BL = readmatrix(filename_BL);
 
 %% Read in IMU data
-IMU = csvread(filename_IMU);
+IMU = csvread('LOG7.csv');
+IMU1 = csvread('LOG1.csv');
+IMU2 = csvread('LOG2.csv');
+IMU3 = csvread('LOG3.csv');
+IMU4 = csvread('LOG4.csv');
+IMU5 = csvread('LOG5.csv');
+IMU6 = csvread('LOG6.csv');
 
 %Time vector for BL data
 % t_BL = 1:length(BL(:, 1));
@@ -55,3 +61,34 @@ xlabel('Time [ms]');
 ylabel('IMU reading [?]');
 title ('IMU data');
 legend('x', 'y','z', 'phi', 'theta', 'psi', 'compass', 'Location','Best');
+
+%plot the compass headings
+offset = mean(IMU2(:, 8));
+error = 2;
+figure
+hold on
+plot(IMU2(:,1)/1000, IMU2(:, 8)-offset);
+plot(IMU3(:,1)/1000, IMU3(:, 8)-offset);
+plot(IMU4(:,1)/1000, IMU4(:, 8)-offset);
+plot(IMU5(:,1)/1000, IMU5(:, 8)-offset);
+plot(IMU6(:,1)/1000, IMU6(:, 8)-offset);
+
+yline(0);
+yline(-30);
+yline(-45);
+yline(-60);
+yline(-90);
+
+fill([0, IMU2(end,1)/1000, IMU2(end,1)/1000, 0],[mean(IMU2(:, 8))-offset+error*ones(1,2),mean(IMU2(:, 8))-offset-error*ones(1,2)],'cyan','FaceAlpha',0.2,'EdgeAlpha',0)
+fill([0, IMU3(end,1)/1000, IMU3(end,1)/1000, 0],[mean(IMU3(:, 8))-offset+error*ones(1,2),mean(IMU3(:, 8))-offset-error*ones(1,2)],'cyan','FaceAlpha',0.2,'EdgeAlpha',0)
+fill([0, IMU4(end,1)/1000, IMU4(end,1)/1000, 0],[mean(IMU4(:, 8))-offset+error*ones(1,2),mean(IMU4(:, 8))-offset-error*ones(1,2)],'cyan','FaceAlpha',0.2,'EdgeAlpha',0)
+fill([0, IMU5(end,1)/1000, IMU5(end,1)/1000, 0],[mean(IMU5(:, 8))-offset+error*ones(1,2),mean(IMU5(:, 8))-offset-error*ones(1,2)],'cyan','FaceAlpha',0.2,'EdgeAlpha',0)
+fill([0, IMU6(end,1)/1000, IMU6(end,1)/1000, 0],[mean(IMU6(:, 8))-offset+error*ones(1,2),mean(IMU6(:, 8))-offset-error*ones(1,2)],'cyan','FaceAlpha',0.2,'EdgeAlpha',0)
+
+hold off
+
+ylim([-100, 10])
+xlabel('Time [ms]');
+ylabel('Compass reading');
+title ('IMU Compass data');
+legend('0^\circ', '30^\circ','45^\circ', '60^\circ', '90^\circ', 'Location','Best');
