@@ -14,7 +14,8 @@ close all
 filename_IMU = 'LOG1.csv';
 
 %% Read in bendlabs data
-BL = readmatrix('ClosedLoopTest2.log');
+BL_R = readmatrix('ClosedLoop6_R.log');
+BL_L = readmatrix('ClosedLoopTest6_L.log');
 
 %% Read in IMU data
 IMU = csvread('LOG7.csv');
@@ -24,15 +25,18 @@ IMU3 = csvread('LOG3.csv');
 IMU4 = csvread('LOG4.csv');
 IMU5 = csvread('LOG5.csv');
 IMU6 = csvread('LOG6.csv');
+FullClosedLoopIMU = csvread('ClosedLoop6_IMU_Both_.csv');
+%FullClosedLoopIMU = csvread('LOG19.csv');
 
 IMU_BL = csvread('LOG14.csv');
 %Time vector for BL data
-t_BL = 1:length(BL(:, 1));
+t_BL = 1:length(BL_R(:, 1));
 
 
 %Plot BL data
-plot(t_BL, BL(:, 1));
+plot(t_BL, BL_R(:, 1));
 hold on
+plot(1:length(BL_L(:,1)),BL_L(:,1))
 %plot(t_BL, BL(:, 2)); %gonna need to know how much of a second each thing is for BL
 hold off
 xlabel('Time [not real units currently!]');
@@ -49,14 +53,14 @@ legend('Angle of ... somethin', 'Location', 'Best');
 figure
 %plot(IMU(:, 1), IMU(:, 1));
 hold on
-time = IMU_BL(:,1)/1000;
-plot(time, IMU_BL(:, 2));
-plot(time, IMU_BL(:, 3));
-plot(time, IMU_BL(:, 4));
-plot(time, IMU_BL(:, 5));
-plot(time, IMU_BL(:, 6));
-plot(time, IMU_BL(:, 7));
-plot(time, IMU_BL(:, 8));
+time = FullClosedLoopIMU(:,1)/1000;
+plot(time, FullClosedLoopIMU(:, 2));
+plot(time, FullClosedLoopIMU(:, 3));
+plot(time, FullClosedLoopIMU(:, 4));
+plot(time, FullClosedLoopIMU(:, 5));
+plot(time, FullClosedLoopIMU(:, 6));
+plot(time, FullClosedLoopIMU(:, 7));
+plot(time, FullClosedLoopIMU(:, 8));
 hold off
 xlabel('Time [ms]');
 ylabel('IMU reading [?]');
