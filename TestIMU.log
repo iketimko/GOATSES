@@ -1,0 +1,55 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2022.04.11 12:23:09 =~=~=~=~=~=~=~=~=~=~=~=
+Beginning Test Setup/Calibration
+BendLabs Calibration routine
+Press a key when the sensor is flat and straight on a table
+l
+Good. Now press a key when the sensor is flat on table but bent at 90 degrees (along X axis).
+l
+BendLabsCalibration complete.
+Actuator Centering...
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Left Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Right Bumper Hit
+Please enter the height of the tether attachment point on the user (from the actuator attachment) (in):
+50
+Please enter the distance between the attachement point on the user and actuator (in):
+56
+Good. Now press a key when ready to begin the test.
