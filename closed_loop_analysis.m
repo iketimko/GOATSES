@@ -28,6 +28,7 @@ fprintf('The closed loop operation frequency is: %3.2f Hz \n', f_s)
 
 t_BL_R = linspace(0,length(BL_R(:,1)) /f_s, length(BL_R(:,1)) );
 t_BL_L = linspace(0,length(BL_L(:,1)) /f_s, length(BL_L(:,1)) );
+t_BL = t_BL_R;
 
 %% Compute the Sway parameters
 compass_data = rmoutliers(IMU(t_start:end, 8));
@@ -83,11 +84,12 @@ title('Error in the vector angle')
 ylabel('Degrees')
 xlabel('Seconds')
 
-%% Plot Bend Labs data
+%% Plot BendLabs data
 figure
 plot(t_BL_R, BL_R(:,1));
 hold on
 plot(t_BL_L, BL_L(:,1));
+% plot(t_BL_R, sin(2*pi*.093*t_BL_R)+mean(BL_R(:,1)));
 hold off
 xlabel('Time [s]');
 ylabel('Angle [degrees]');
@@ -123,3 +125,57 @@ xlabel('Time [s]');
 ylabel('degrees/m');
 title ('IMU data');
 legend('y','z','psi', 'compass', 'Location','Best');
+
+%% generate a gif of the plot
+h = figure;
+scale = 1;
+h.Position = [10 50 scale*1500 scale*800];
+set(gcf,'color','w');
+axis tight manual % this ensures that getframe() returns a consistent size
+filename = 'compare.gif';
+i = 1;
+for n = 1:round(length(t_BL)/(30*10)):length(t_BL)
+    clf
+    % for Position
+    subplot(2,1,1)
+    plot(t_BL_R(1:n), BL_R(1:n,1),'Linewidth', 2)
+    hold on
+    plot(t_BL_L(1:n), BL_L(1:n,1),'Linewidth', 2)
+    yline(mean([mean(BL_L(:,1)) mean(BL_R(:,1))]),'b--','Linewidth', 2)
+    legend('Right Sensor','Left Sensor','Setpoint','Location','SE')
+    title('Angle Sensor Measurements','FontSize', 14)
+    xlabel('Time (s)','FontSize', 12)
+    ylabel('Measured Angle (Deg)','FontSize', 12)
+    xlim([0,t_BL(end)]);
+%     ylim([-10,10]);
+    % for Error
+    subplot(2,1,2);
+    plot(t_BL(1:n),theta_err(1:n),'Linewidth', 2)
+    hold on
+%     x_patch = [time(1:n), flip(time(1:n))];
+%     y_patch = [error_vec+angle_error, flip(error_vec-angle_error)];
+%     patch(x_patch,y_patch,'yellow','FaceAlpha',.3)
+    yline(2,'r--','Linewidth', 3)
+    yline(-2,'r--','Linewidth', 3)
+    legend('Time Delay', 'System Error','Location','SE');
+    ylim([-2.1,2.1])
+    xlim([0,t_BL(end)]);
+    title('Error in Vector Angle','FontSize', 14);
+    xlabel('Time (s)','FontSize', 12)
+    ylabel('Angle Error (Deg)','FontSize', 12);
+
+    drawnow 
+
+    % Capture the plot as an image 
+    frame = getframe(h); 
+    im = frame2im(frame); 
+    [imind,cm] = rgb2ind(im,256); 
+
+    % Write to the GIF File 
+    if n == 1 
+      imwrite(imind,cm,filename,'gif', 'Loopcount',inf); 
+    else 
+      imwrite(imind,cm,filename,'gif','DelayTime',1/30,'WriteMode','append'); 
+    end 
+    
+end
