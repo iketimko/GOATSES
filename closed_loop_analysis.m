@@ -147,7 +147,7 @@ for n = 1:round(length(t_BL)/(30*10)):length(t_BL)
     xlabel('Time (s)','FontSize', 12)
     ylabel('Measured Angle (Deg)','FontSize', 12)
     xlim([0,t_BL(end)]);
-%     ylim([-10,10]);
+    ylim([39,44]);
     % for Error
     subplot(2,1,2);
     plot(t_BL(1:n),theta_err(1:n),'Linewidth', 2)
