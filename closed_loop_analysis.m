@@ -160,7 +160,7 @@ title ('IMU data');
 legend('y','z','psi', 'compass', 'Location','Best');
 
 %% generate a gif of the plot
-if false 
+if true %for debugging 
     h = figure;
     scale = 1;
     h.Position = [10 50 scale*1500 scale*800];

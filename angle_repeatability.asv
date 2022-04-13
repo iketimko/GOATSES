@@ -105,10 +105,12 @@ ylabel('Degrees')
 xlabel('Seconds')
 
 %% Plot the results with error
-h = figure;
-    scale = 1;
-    h.Position = [10 50 scale*1500 scale*800];
-hold on
+set(gcf,'color','w');
+axis tight manual % this ensures that getframe() returns a consistent size
+filename = 'compare.gif';
+i = 1;
+for n = 1:round(length(t_BL)/(30*10)):length(t_BL)
+    clf
 
 % define erors 
 repeatability_error = .68;
@@ -117,15 +119,15 @@ sensor_error = .2;
 % Sensor error
 x_patch = [t, flip(t)];
 y_patch = [theta_err+repeatability_error+sensor_error, flip(theta_err-repeatability_error-sensor_error)];
-patch(x_patch,y_patch,'red','FaceAlpha',1)
+patch(x_patch,y_patch,'yellow','FaceAlpha',1)
 
 % Repeatability error
 x_patch = [t, flip(t)];
 y_patch = [theta_err+repeatability_error, flip(theta_err-repeatability_error)];
-patch(x_patch,y_patch,'yellow','FaceAlpha',1)
+patch(x_patch,y_patch,'cyan','FaceAlpha',1)
 
 % Plot the line
-plot(t,theta_err,'Linewidth', 2)
+plot(t,theta_err,'k','Linewidth', 2)
 
 yline(2,'r--','Linewidth', 3)
 yline(-2,'r--','Linewidth', 3)
