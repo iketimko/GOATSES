@@ -87,22 +87,33 @@ ylabel('Degrees')
 xlabel('Seconds')
 
 %% plot the load magnitude error
-LME = zeros(1,;
-F = 10;
-for i = 1:length(F)
+F = linspace(0,1500,100);
+LME = zeros(1,length(F));
+
+for j = 1:length(F)
     resultant = zeros(2,length(BL_L));
     resultant_IDEAL = zeros(2,length(BL_L));
     theta_err = zeros(1,length(BL_L));
     loadmag_err = zeros(1,length(BL_L));
 
     for i = 1:length(BL_L)
-        resultant(:,i) = R(F ,F, BL_L(i,1) ,BL_R(i,1));
-        resultant_IDEAL(:,i) = R(F ,F, setpoint , setpoint);
+        resultant(:,i) = R(F(j),F(j) , BL_L(i,1) ,BL_R(i,1));
+        resultant_IDEAL(:,i) = R(F(j), F(j), setpoint , setpoint);
         theta_err(i) = atand(resultant(1,i)/resultant(2,i));
         loadmag_err(i) = norm(resultant(:,i))-norm(resultant_IDEAL(:,i));
     end
-    LME(i) = max(loadmag_error);
+    LME(j) = max(loadmag_err);
 end
+
+figure
+plot(F, LME)
+yline(10,'--r')
+ylim([0, 12])
+xline(1112.06/(2*sind(setpoint)),'--k')
+title('Error in the force Magnitude')
+legend('Magnitude Error', ')
+ylabel('Loading error [N]')
+xlabel('Counterweight Weight [N]')
 
 %% Plot BendLabs data
 figure

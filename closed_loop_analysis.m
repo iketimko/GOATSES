@@ -109,7 +109,9 @@ figure
 plot(F, LME)
 yline(10,'--r')
 ylim([0, 12])
+xline(1112.06/(2*sind(setpoint)),'--k')
 title('Error in the force Magnitude')
+legend('Magnitude Error', 'Magnitude Requirement', 'Maximum Design Load', 'Location', 'SE')
 ylabel('Loading error [N]')
 xlabel('Counterweight Weight [N]')
 
