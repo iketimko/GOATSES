@@ -68,7 +68,31 @@ R = @(F1,F2,alpha,beta) [-sind(alpha), sind(beta); cosd(alpha), cosd(beta)]*[F1;
 setpoint = mean([mean(BL_L(:,1)) mean(BL_R(:,1))]);
 
 %% Plot the Resultant Vector values
-F = 10;
+F = 66.7;
+resultant = zeros(2,length(BL_L));
+theta_err = zeros(1,length(BL_L));
+
+for i = 1:length(BL_L)
+    resultant(:,i) = R(F ,F, BL_L(i,1) ,BL_R(i,1));
+    theta_err(i) = atand(resultant(1,i)/resultant(2,i));
+end
+
+figure
+plot(t_BL_R, theta_err)
+yline(2)
+yline(-2)
+ylim([-3 3])
+title('Error in the vector angle')
+ylabel('Degrees')
+xlabel('Seconds')
+
+%% Plot the angle repeatablilty
+BL_R = readmatrix('ClosedLoop6_R.log');
+BL_L = readmatrix('ClosedLoopTest6_L.log');
+% remove NaN values
+BL_L = BL_L(10:end-2,:);
+BL_R = BL_R(1:end-2,:);
+
 resultant = zeros(2,length(BL_L));
 theta_err = zeros(1,length(BL_L));
 
@@ -111,7 +135,7 @@ yline(10,'--r')
 ylim([0, 12])
 xline(1112.06/(2*sind(setpoint)),'--k')
 title('Error in the force Magnitude')
-legend('Magnitude Error', ')
+legend('Magnitude Error', 'Magnitude Requirement', 'Maximum Design Load', 'Location', 'SE')
 ylabel('Loading error [N]')
 xlabel('Counterweight Weight [N]')
 

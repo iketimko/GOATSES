@@ -1,0 +1,99 @@
+%% GOATSES BendLabs and IMU Integration Testing
+%QM, CW, IT, AH
+%4/2/22
+%
+
+%% housekeeping
+clear 
+clc
+close all
+
+%% Plot the angle repeatablilty
+
+figure 
+hold on
+title('Sensor Data')
+ylabel('Degrees')
+xlabel('Seconds')
+
+% Test 6
+BL_R_6 = readmatrix('ClosedLoop6_R.log');
+BL_L_6 = readmatrix('ClosedLoopTest6_L.log');
+% remove NaN values and ensure consistant vector lengths
+BL_L{6}(:,:) = BL_L_6(10:end-2,:);
+BL_R{6}(:,:) = BL_R_6(1:end-2,:);
+%plot the values
+plot(BL_L{6}(:,1))
+plot(BL_R{6}(:,1))
+
+% Test 5
+BL_R_5 = readmatrix('ClosedLoop5_R.log');
+BL_L_5 = readmatrix('ClosedLoopTest5_L.log');
+% remove NaN values and ensure consistant vector lengths
+BL_L{5}(:,:) = BL_L_5(1:end-2-(length(BL_L_5)-length(BL_R_5)),:);
+BL_R{5}(:,:) = BL_R_5(1:end-2,:);
+%plot the values
+plot(BL_L{5}(:,1))
+plot(BL_R{5}(:,1))
+
+% Test 4
+BL_R_4 = readmatrix('ClosedLoop4_R.log');
+BL_L_4 = readmatrix('ClosedLoopTest4_L.log');
+% remove NaN values and ensure consistant vector lengths
+BL_L{4}(:,:) = BL_L_4(1:end-2-(length(BL_L_4)-length(BL_R_4)),:);
+BL_R{4}(:,:) = BL_R_4(1:end-2,:);
+%plot the values
+plot(BL_L{4}(:,1))
+plot(BL_R{4}(:,1))
+
+% Test 3
+BL_R_3 = readmatrix('ClosedLoop3_R.log');
+BL_L_3 = readmatrix('ClosedLoopTest3_L.log');
+% remove NaN values and ensure consistant vector lengths
+BL_L{3}(:,:) = BL_L_3(1:end-2-(length(BL_L_3)-length(BL_R_3)),:);
+BL_R{3}(:,:) = BL_R_3(1:end-2,:);
+%plot the values
+plot(BL_L{3}(:,1))
+plot(BL_R{3}(:,1))
+
+% % Test 2
+% BL_R_2 = readmatrix('ClosedLoop2_R.log');
+% BL_L_2 = readmatrix('ClosedLoopTest2_L.log');
+% % remove NaN values and ensure consistant vector lengths
+% BL_L{2}(:,:) = BL_L_2(1:end-2-(length(BL_L_2)-length(BL_R_2)),:);
+% BL_R{2}(:,:) = BL_R_2(1:end-2,:);
+% %plot the values
+% plot(BL_L{2}(:,1))
+% plot(BL_R{2}(:,1))
+
+% Test 1
+BL_R_1 = readmatrix('ClosedLoop1_R.log');
+BL_L_1 = readmatrix('ClosedLoopTest1_L.log');
+
+F = 66.7;
+
+figure
+hold on
+
+for j = 1:6
+    % Compute the resultant Vector R
+    R = @(F1,F2,alpha,beta) [-sind(alpha), sind(beta); cosd(alpha), cosd(beta)]*[F1; F2];
+
+    setpoint = mean([mean(BL_L(:,1)) mean(BL_R(:,1))]);
+    resultant = zeros(2,length(BL_L));
+    theta_err = zeros(1,length(BL_L));
+
+    for i = 1:length(BL_L)
+        resultant(:,i) = R(F ,F, BL_L(i,1) ,BL_R(i,1));
+        theta_err(i) = atand(resultant(1,i)/resultant(2,i));
+    end
+
+    plot(t_BL_R, theta_err)
+end
+
+yline(2)
+yline(-2)
+% ylim([-3 3])
+title('Error in the vector angle')
+ylabel('Degrees')
+xlabel('Seconds')

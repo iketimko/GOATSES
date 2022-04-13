@@ -68,7 +68,7 @@ R = @(F1,F2,alpha,beta) [-sind(alpha), sind(beta); cosd(alpha), cosd(beta)]*[F1;
 setpoint = mean([mean(BL_L(:,1)) mean(BL_R(:,1))]);
 
 %% Plot the Resultant Vector values
-F = 10;
+F = 66.7;
 resultant = zeros(2,length(BL_L));
 theta_err = zeros(1,length(BL_L));
 
@@ -85,6 +85,8 @@ ylim([-3 3])
 title('Error in the vector angle')
 ylabel('Degrees')
 xlabel('Seconds')
+
+
 
 %% plot the load magnitude error
 F = linspace(0,1500,100);
