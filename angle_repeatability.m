@@ -95,6 +95,7 @@ for j = 3:6
     end
     t = linspace(0,length(BL_L{j})/56.1655,length(BL_L{j}));
     plot(t, theta_err)
+    M(j) = mean(theta_err);
 end
 
 yline(2)
@@ -105,6 +106,11 @@ ylabel('Degrees')
 xlabel('Seconds')
 
 %% Plot the results with error
+
+% define erors 
+repeatability_error = sqrt(mean(M))
+sensor_error = .2;
+    
 h = figure;
 scale = 1;
 h.Position = [10 50 scale*1500 scale*800];
@@ -115,9 +121,6 @@ i = 1;
 for n = 1:round(length(t)/(30*10)):length(t)
     clf
     hold on
-    % define erors 
-    repeatability_error = .68;
-    sensor_error = .2;
 
     % Sensor error
     x_patch = [t(1:n), flip(t(1:n))];
