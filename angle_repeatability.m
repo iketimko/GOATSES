@@ -113,7 +113,7 @@ sensor_error = .2;
     
 h = figure;
 scale = 1;
-h.Position = [10 50 scale*1500 scale*800];
+h.Position = [10 50 scale*1500 scale*600];
 set(gcf,'color','w');
 axis tight manual % this ensures that getframe() returns a consistent size
 filename = 'repeatability.gif';
