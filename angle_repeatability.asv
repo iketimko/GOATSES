@@ -8,6 +8,20 @@ clear
 clc
 close all
 
+%% Plot the angle data
+figure 
+hold on
+title('Sensor Data')
+ylabel('Degrees')
+xlabel('Seconds')
+
+% Test 6
+DATA_14_0 = readmatrix('angleDataTranslation-14x10Delay.log');
+% remove NaN values and ensure consistant vector lengths
+%plot the values
+plot(BL_L{6}(:,1))
+plot(BL_R{6}(:,1))
+
 %% Plot the angle repeatablilty
 
 figure 
@@ -95,7 +109,7 @@ for j = 3:6
     end
     t = linspace(0,length(BL_L{j})/56.1655,length(BL_L{j}));
     plot(t, theta_err)
-    M = mean(theta_err))
+    M(j) = mean(theta_err);
 end
 
 yline(2)
@@ -106,9 +120,14 @@ ylabel('Degrees')
 xlabel('Seconds')
 
 %% Plot the results with error
+
+% define erors 
+repeatability_error = sqrt(mean(M))
+sensor_error = .2;
+    
 h = figure;
 scale = 1;
-h.Position = [10 50 scale*1500 scale*800];
+h.Position = [10 50 scale*1500 scale*600];
 set(gcf,'color','w');
 axis tight manual % this ensures that getframe() returns a consistent size
 filename = 'repeatability.gif';
@@ -116,9 +135,6 @@ i = 1;
 for n = 1:round(length(t)/(30*10)):length(t)
     clf
     hold on
-    % define erors 
-    repeatability_error = .68;
-    sensor_error = .2;
 
     % Sensor error
     x_patch = [t(1:n), flip(t(1:n))];

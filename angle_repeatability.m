@@ -8,6 +8,19 @@ clear
 clc
 close all
 
+%% Plot the angle data
+figure 
+hold on
+title('Sensor Data')
+ylabel('Degrees')
+xlabel('Seconds')
+
+% Test 6
+DATA_14_0 = readmatrix('angleDataTranslation-14x10Delay.log');
+%plot the values
+plot(DATA_14_0(:,2))
+plot(DATA_14_0(:,1))
+
 %% Plot the angle repeatablilty
 
 figure 
