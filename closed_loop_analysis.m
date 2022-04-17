@@ -108,12 +108,14 @@ for j = 1:length(F)
 end
 
 figure
-plot(F, LME)
+hold on
+plot(F(1:42), LME(1:42))
+plot(F(42:end), LME(42:end),'--')
 yline(10,'--r')
 ylim([0, 12])
 xline(1112.06/(2*sind(setpoint)),'--k')
 title('Error in the force Magnitude')
-legend('Magnitude Error', 'Magnitude Requirement', 'Maximum Design Load', 'Location', 'SE')
+legend('Load Magnitude Error', 'Extrapolated Data', 'Magnitude Requirement', 'Maximum Design Load', 'Location', 'SE')
 ylabel('Loading error [N]')
 xlabel('Counterweight Weight [N]')
 
